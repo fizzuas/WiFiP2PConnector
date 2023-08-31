@@ -25,14 +25,14 @@ class SearchDevicesCallback : BaseCallback() {
     /**
      * 搜索操作成功
      */
-    fun onSendSuccess(onSuccess: (() -> Unit)) {
+    fun onSearchActionSuccess(onSuccess: (() -> Unit)) {
         this.searchActionSuccess = onSuccess
     }
 
     /**
      * 搜索操作失败
      */
-    fun onSendFail(onFail: ((failType: SearchActionFailType) -> Unit)) {
+    fun onSearchActionFail(onFail: ((failType: SearchActionFailType) -> Unit)) {
         this.sendActionFail = onFail
     }
 

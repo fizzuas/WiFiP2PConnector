@@ -1,12 +1,12 @@
-package com.ouyx.lib_wifip2p_connector.util
+package com.ouyx.wifip2pconnector
 
 import android.util.Log
 
 internal object DefaultLogger {
 
-    private var isDebug = false
+    private var isDebug = true
 
-    private const val TAG = "lib-wifi-p2p-connector"
+    private const val TAG = "app"
 
     fun setDebug(isDebug: Boolean) {
         DefaultLogger.isDebug = isDebug

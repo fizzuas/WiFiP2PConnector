@@ -31,4 +31,9 @@ interface IConnector {
      */
     fun searchDevices(callback: SearchDevicesCallback)
 
+
+    /**
+     * 销毁资源
+     */
+    fun close()
 }

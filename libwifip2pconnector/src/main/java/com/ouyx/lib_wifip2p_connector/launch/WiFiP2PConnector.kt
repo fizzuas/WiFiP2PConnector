@@ -11,6 +11,7 @@ import android.net.wifi.p2p.WifiP2pManager
 import com.ouyx.lib_wifip2p_connector.core.ConnectorImpl
 import com.ouyx.lib_wifip2p_connector.exceptions.InitializationException
 import com.ouyx.lib_wifip2p_connector.facade.callback.SearchDevicesCallback
+import com.ouyx.lib_wifip2p_connector.facade.listener.PeerDevicesListener
 import com.ouyx.lib_wifip2p_connector.util.DefaultLogger
 
 
@@ -28,9 +29,6 @@ class WiFiP2PConnector {
 
     internal lateinit var mWifiP2pChannel: WifiP2pManager.Channel
 
-    internal lateinit var mConnectorImpl: ConnectorImpl
-
-
     internal lateinit var mApplication: Application
 
 
@@ -43,7 +41,9 @@ class WiFiP2PConnector {
             }
     }
 
-
+    /**
+     * 初始化
+     */
     fun init(application: Application, connectOptions: ConnectOptions = ConnectOptions.getDefaultHttpOptions()) {
         mApplication = application
         mWiFiP2POptions = connectOptions
@@ -53,10 +53,15 @@ class WiFiP2PConnector {
             DefaultLogger.error(message = "初始化失败,设备不支持WiFi Direct或者该功能没有被启用")
             return
         }
-
         mWiFiP2PManager = wifiP2pManager
+
+
+        ConnectorImpl.get().init()
+
+        DefaultLogger.setDebug(mWiFiP2POptions.isDebug)
+
         mWifiP2pChannel = mWiFiP2PManager.initialize(application, application.mainLooper, null)
-        mConnectorImpl = ConnectorImpl()
+
     }
 
 
@@ -69,11 +74,22 @@ class WiFiP2PConnector {
 
         val searchDevicesCallback = SearchDevicesCallback()
         searchDevicesCallback.callback()
-
-        mConnectorImpl.searchDevices(searchDevicesCallback)
+        ConnectorImpl.get().searchDevices(searchDevicesCallback)
     }
 
+    /**
+     * 设置P2P连接的对等列表监听器
+     */
+    fun setPeerListListener(peerListListener:PeerDevicesListener) {
+       ConnectorImpl.get().setPeerListListener(peerListListener)
+    }
 
+    /**
+     * 移除对等列表监听器
+     */
+    fun removePeerListListener() {
+        ConnectorImpl.get().removePeerListListener()
+    }
 
     /**
      * 检查 是否初始化
@@ -84,5 +100,10 @@ class WiFiP2PConnector {
         }
     }
 
-
+    /**
+     * 释放 资源
+     */
+    fun close() {
+        ConnectorImpl.get().close()
+    }
 }

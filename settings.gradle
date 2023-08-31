@@ -10,6 +10,16 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+
+        maven {
+            allowInsecureProtocol = true
+            url 'http://10.70.12.12:8081/repository/maven_bsz_release/'
+        }
+        maven {
+            allowInsecureProtocol = true
+            url 'http://10.70.12.12:8081/repository/maven_bsz_snapshot/'
+        }
+
     }
 }
 rootProject.name = "WiFiP2PConnector"

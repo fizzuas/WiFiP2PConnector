@@ -14,6 +14,30 @@ package com.ouyx.lib_wifip2p_connector.facade.data
  */
 sealed class SearchActionFailType {
 
-    class Fail(code: Int) : SearchActionFailType()
+    /**
+     * WiFi P2P 未启用
+     */
+    object P2PNotEnabled : SearchActionFailType()
+
+    /**
+     * 运行该应用的设备不支持 WLAN 点对点。
+     */
+    object P2pUnsupported : SearchActionFailType()
+
+    /**
+     * 由于出现内部错误，操作失败
+     */
+    object ERROR : SearchActionFailType()
+
+    /**
+     * 系统太忙，无法处理请求
+     */
+    object BUSY : SearchActionFailType()
+
+    /**
+     * 未知错误
+     */
+    object UNKNOWN : SearchActionFailType()
+
 
 }

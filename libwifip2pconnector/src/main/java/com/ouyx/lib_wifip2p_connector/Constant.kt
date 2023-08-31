@@ -17,6 +17,6 @@ object Constant {
     /**
      * 是否开启日志
      */
-    const val DEFAULT_IS_DEBUG = false
+    const val DEFAULT_IS_DEBUG = true
 
 }
