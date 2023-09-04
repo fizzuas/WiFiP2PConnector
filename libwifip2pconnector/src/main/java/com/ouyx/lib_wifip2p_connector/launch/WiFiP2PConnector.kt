@@ -43,25 +43,29 @@ class WiFiP2PConnector {
 
     /**
      * 初始化
+     * @return true:初始化成功； false：设备不支持
      */
-    fun init(application: Application, connectOptions: ConnectOptions = ConnectOptions.getDefaultHttpOptions()) {
+    fun init(
+        application: Application,
+        connectOptions: ConnectOptions = ConnectOptions.getDefaultHttpOptions(),
+    ): Boolean {
         mApplication = application
         mWiFiP2POptions = connectOptions
+
+        DefaultLogger.setDebug(mWiFiP2POptions.isDebug)
 
         val wifiP2pManager = application.getSystemService(WIFI_P2P_SERVICE) as? WifiP2pManager
         if (wifiP2pManager == null) {
             DefaultLogger.error(message = "初始化失败,设备不支持WiFi Direct或者该功能没有被启用")
-            return
+            return false
         }
         mWiFiP2PManager = wifiP2pManager
 
-
         ConnectorImpl.get().init()
-
-        DefaultLogger.setDebug(mWiFiP2POptions.isDebug)
 
         mWifiP2pChannel = mWiFiP2PManager.initialize(application, application.mainLooper, null)
 
+        return true
     }
 
 
@@ -80,8 +84,8 @@ class WiFiP2PConnector {
     /**
      * 设置P2P连接的对等列表监听器
      */
-    fun setPeerListListener(peerListListener:PeerDevicesListener) {
-       ConnectorImpl.get().setPeerListListener(peerListListener)
+    fun setPeerListListener(peerListListener: PeerDevicesListener) {
+        ConnectorImpl.get().setPeerListListener(peerListListener)
     }
 
     /**
@@ -89,6 +93,19 @@ class WiFiP2PConnector {
      */
     fun removePeerListListener() {
         ConnectorImpl.get().removePeerListListener()
+    }
+
+
+    fun connect(deviceAddress: String) {
+        checkInitialization()
+
+        ConnectorImpl.get().connect(deviceAddress)
+    }
+
+    fun  disConnect(){
+        checkInitialization()
+
+        ConnectorImpl.get().disConnect()
     }
 
     /**

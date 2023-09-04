@@ -20,6 +20,11 @@ sealed class SearchActionFailType {
     object P2PNotEnabled : SearchActionFailType()
 
     /**
+     * 权限不够
+     */
+    object PermissionNotEnough : SearchActionFailType()
+
+    /**
      * 运行该应用的设备不支持 WLAN 点对点。
      */
     object P2pUnsupported : SearchActionFailType()

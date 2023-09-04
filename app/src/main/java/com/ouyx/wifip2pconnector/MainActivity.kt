@@ -2,6 +2,7 @@ package com.ouyx.wifip2pconnector
 
 import android.Manifest
 import android.net.wifi.p2p.WifiP2pDevice
+import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
 import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -63,10 +64,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>(ActivityMainBinding::infl
                 }
             }
         }
+
+        viewBinding.butDisConnect.setOnClickListener {
+            WiFiP2PConnector.get().disConnect()
+        }
     }
 
     private fun connect(wifiP2pDevice: WifiP2pDevice) {
-
+        WiFiP2PConnector.get().connect(wifiP2pDevice.deviceAddress)
     }
 
     private fun search() {

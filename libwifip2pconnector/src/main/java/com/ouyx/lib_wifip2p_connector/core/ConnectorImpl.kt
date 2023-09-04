@@ -5,19 +5,21 @@
  */
 package com.ouyx.lib_wifip2p_connector.core
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.NetworkInfo
+import android.net.wifi.WpsInfo
+import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
 import com.ouyx.lib_wifip2p_connector.facade.callback.SearchDevicesCallback
-import com.ouyx.lib_wifip2p_connector.facade.data.PeerDevice
 import com.ouyx.lib_wifip2p_connector.facade.data.SearchActionFailType
-import com.ouyx.lib_wifip2p_connector.facade.data.getDeviceStatus
 import com.ouyx.lib_wifip2p_connector.facade.listener.PeerDevicesListener
 import com.ouyx.lib_wifip2p_connector.util.DefaultLogger
+import com.ouyx.lib_wifip2p_connector.util.P2pUtil.isPermission
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -56,7 +58,6 @@ class ConnectorImpl private constructor() : IConnector, BroadcastReceiver() {
             }
     }
 
-
     fun init() {
         val intentFilter = IntentFilter()
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)
@@ -75,17 +76,22 @@ class ConnectorImpl private constructor() : IConnector, BroadcastReceiver() {
         mPeerListListener = null
     }
 
+    @SuppressLint("MissingPermission")
     override fun searchDevices(callback: SearchDevicesCallback) {
         if (!mP2pStateEnable) {
             DefaultLogger.warning("WiFi P2P 未启动,请打开WiFi")
             callback.callSearchActionFail(SearchActionFailType.P2PNotEnabled)
             return
         }
+        if (!isPermission(getApplication())) {
+            DefaultLogger.warning("WiFi P2P 连接权限不够")
+            callback.callSearchActionFail(SearchActionFailType.PermissionNotEnough)
+            return
+        }
 
         DefaultLogger.info("使用 Wi-Fi 点对点连接开始搜索附近的设备...")
         getWiFiManager().discoverPeers(getWiFiChannel(), object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
-                DefaultLogger.info("扫描操作成功")
                 callback.callSearchActionSuccess()
             }
 
@@ -111,12 +117,44 @@ class ConnectorImpl private constructor() : IConnector, BroadcastReceiver() {
         })
     }
 
+    @SuppressLint("MissingPermission")
+    override fun connect(address: String) {
+        val wifiP2pConfig = WifiP2pConfig()
+        wifiP2pConfig.deviceAddress = address
+        wifiP2pConfig.wps.setup = WpsInfo.PBC
+        DefaultLogger.warning(message = "正在连接，deviceName: $address")
+        getWiFiManager().connect(getWiFiChannel(), wifiP2pConfig,
+            object : WifiP2pManager.ActionListener {
+                override fun onSuccess() {
+                    DefaultLogger.warning("connect onSuccess")
+                }
+
+                override fun onFailure(reason: Int) {
+                    DefaultLogger.warning("连接失败 $reason")
+                }
+            })
+    }
+
+    override fun disConnect() {
+        getWiFiManager().cancelConnect(getWiFiChannel(), object : WifiP2pManager.ActionListener {
+            override fun onFailure(reasonCode: Int) {
+                DefaultLogger.warning("cancelConnect onFailure:$reasonCode")
+            }
+
+            override fun onSuccess() {
+                DefaultLogger.warning("cancelConnect onSuccess")
+            }
+        })
+        getWiFiManager().removeGroup(getWiFiChannel(), null)
+    }
+
     override fun close() {
         getApplication().unregisterReceiver(this)
         mPeerListListener = null
         INSTANCE = null
     }
 
+    @SuppressLint("MissingPermission")
     override fun onReceive(context: Context?, intent: Intent?) {
         if (intent != null) {
             when (intent.action) {
@@ -175,6 +213,4 @@ class ConnectorImpl private constructor() : IConnector, BroadcastReceiver() {
             }
         }
     }
-
-
 }

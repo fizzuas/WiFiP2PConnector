@@ -31,9 +31,19 @@ interface IConnector {
      */
     fun searchDevices(callback: SearchDevicesCallback)
 
+    /**
+     * 连接设备
+     */
+    fun connect(address: String)
 
     /**
-     * 销毁资源
+     * 断开连接
+     */
+    fun disConnect()
+
+
+    /**
+     * 释放资源
      */
     fun close()
 }

@@ -13,7 +13,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             android:layout_margin="16dp"
-            android:text="搜索"/>
+            android:text="搜索" />
 
     <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recy"
@@ -23,6 +23,16 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_margin="16dp" />
+
+
+    <Button
+            android:id="@+id/but_dis_connect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/recy"
+            android:layout_margin="16dp"
+            android:text="断开连接" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
