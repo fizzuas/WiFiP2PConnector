@@ -11,7 +11,7 @@ import android.net.wifi.p2p.WifiP2pManager
 import com.ouyx.lib_wifip2p_connector.core.ConnectorImpl
 import com.ouyx.lib_wifip2p_connector.exceptions.InitializationException
 import com.ouyx.lib_wifip2p_connector.facade.callback.SearchDevicesCallback
-import com.ouyx.lib_wifip2p_connector.facade.listener.PeerDevicesListener
+import com.ouyx.lib_wifip2p_connector.facade.listener.PeerChangedLsistener
 import com.ouyx.lib_wifip2p_connector.util.DefaultLogger
 
 
@@ -84,7 +84,7 @@ class WiFiP2PConnector {
     /**
      * 设置P2P连接的对等列表监听器
      */
-    fun setPeerListListener(peerListListener: PeerDevicesListener) {
+    fun setPeerListListener(peerListListener: PeerChangedLsistener) {
         ConnectorImpl.get().setPeerListListener(peerListListener)
     }
 

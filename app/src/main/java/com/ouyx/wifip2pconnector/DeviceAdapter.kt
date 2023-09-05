@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.ouyx.lib_wifip2p_connector.facade.data.getDeviceStatus
+import com.ouyx.lib_wifip2p_connector.facade.data.PeerDevice
+import com.ouyx.lib_wifip2p_connector.facade.data.getDeviceStatusDesc
+import com.ouyx.lib_wifip2p_connector.facade.data.getStatusDesc
 
 
 interface OnItemClickListener {
@@ -15,7 +17,7 @@ interface OnItemClickListener {
 
 }
 
-class DeviceAdapter(private val wifiP2pDeviceList: List<WifiP2pDevice>) :
+class DeviceAdapter(private val wifiP2pDeviceList: List<PeerDevice>) :
     RecyclerView.Adapter<DeviceAdapter.ViewHolder>() {
 
     var onItemClickListener: OnItemClickListener? = null
@@ -29,7 +31,7 @@ class DeviceAdapter(private val wifiP2pDeviceList: List<WifiP2pDevice>) :
         val device = wifiP2pDeviceList[position]
         holder.tvDeviceName.text = device.deviceName
         holder.tvDeviceAddress.text = device.deviceAddress
-        holder.tvDeviceDetails.text = getDeviceStatus(deviceStatus = device.status)
+        holder.tvDeviceDetails.text = device.getStatusDesc()
         holder.itemView.setOnClickListener {
             onItemClickListener?.onItemClick(position = position)
         }

@@ -21,6 +21,8 @@ class ConnectOptions private constructor(builder: Builder) {
      */
     val isDebug = builder.isDebug
 
+
+
     companion object {
 
         @JvmStatic
@@ -32,6 +34,7 @@ class ConnectOptions private constructor(builder: Builder) {
         internal var isDebug = DEFAULT_IS_DEBUG
 
 
+
         /**
          * 设置是否开启调试
          */
@@ -39,6 +42,8 @@ class ConnectOptions private constructor(builder: Builder) {
             this.isDebug = isDebug
             return this
         }
+
+
 
         fun build(): ConnectOptions = ConnectOptions(this)
 

@@ -17,7 +17,7 @@ import android.net.wifi.p2p.WifiP2pDevice
 data class PeerDevice(val deviceName: String, val deviceAddress: String, val state: DeviceState)
 
 
-fun getDeviceStatus(deviceStatus: Int): String {
+fun getDeviceStatusDesc(deviceStatus: Int): String {
     return when (deviceStatus) {
         WifiP2pDevice.AVAILABLE -> "可用的"
         WifiP2pDevice.INVITED -> "邀请中"
@@ -25,6 +25,27 @@ fun getDeviceStatus(deviceStatus: Int): String {
         WifiP2pDevice.FAILED -> "失败的"
         WifiP2pDevice.UNAVAILABLE -> "不可用的"
         else -> "未知"
+    }
+}
+fun PeerDevice.getStatusDesc():String{
+    return when (this.state) {
+        DeviceState.AVAILABLE -> "可用的"
+        DeviceState.INVITED -> "邀请中"
+        DeviceState.CONNECTED -> "已连接"
+        DeviceState.FAILED -> "失败的"
+        DeviceState.UNAVAILABLE -> "不可用的"
+        else -> "未知"
+    }
+}
+
+fun getDeviceState(deviceStatus: Int): DeviceState {
+    return when (deviceStatus) {
+        WifiP2pDevice.AVAILABLE -> DeviceState.AVAILABLE
+        WifiP2pDevice.INVITED -> DeviceState.INVITED
+        WifiP2pDevice.CONNECTED -> DeviceState.CONNECTED
+        WifiP2pDevice.FAILED -> DeviceState.FAILED
+        WifiP2pDevice.UNAVAILABLE -> DeviceState.UNAVAILABLE
+        else -> DeviceState.UNKNOWN
     }
 }
 

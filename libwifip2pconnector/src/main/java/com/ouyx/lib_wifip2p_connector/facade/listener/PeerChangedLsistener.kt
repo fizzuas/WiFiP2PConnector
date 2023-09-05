@@ -6,7 +6,6 @@
 package com.ouyx.lib_wifip2p_connector.facade.listener
 
 import android.net.wifi.p2p.WifiP2pDevice
-import com.ouyx.lib_wifip2p_connector.facade.data.PeerDevice
 
 
 /**
@@ -15,7 +14,7 @@ import com.ouyx.lib_wifip2p_connector.facade.data.PeerDevice
  * @author ouyx
  * @date 2023年08月31日 16时05分
  */
-interface PeerDevicesListener {
+interface PeerChangedLsistener {
 
     fun onPeersAvailable(wifiP2pDeviceList: Collection<WifiP2pDevice>)
 

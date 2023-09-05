@@ -12,37 +12,37 @@ package com.ouyx.lib_wifip2p_connector.facade.data
  * @author ouyx
  * @date 2023年08月30日 16时59分
  */
-sealed class SearchActionFailType {
+sealed class SearchFailType {
 
     /**
      * WiFi P2P 未启用
      */
-    object P2PNotEnabled : SearchActionFailType()
+    object P2PNotEnabled : SearchFailType()
 
     /**
      * 权限不够
      */
-    object PermissionNotEnough : SearchActionFailType()
+    object PermissionNotEnough : SearchFailType()
 
     /**
      * 运行该应用的设备不支持 WLAN 点对点。
      */
-    object P2pUnsupported : SearchActionFailType()
+    object P2pUnsupported : SearchFailType()
 
     /**
      * 由于出现内部错误，操作失败
      */
-    object ERROR : SearchActionFailType()
+    object ERROR : SearchFailType()
 
     /**
      * 系统太忙，无法处理请求
      */
-    object BUSY : SearchActionFailType()
+    object BUSY : SearchFailType()
 
     /**
      * 未知错误
      */
-    object UNKNOWN : SearchActionFailType()
+    object UNKNOWN : SearchFailType()
 
 
 }

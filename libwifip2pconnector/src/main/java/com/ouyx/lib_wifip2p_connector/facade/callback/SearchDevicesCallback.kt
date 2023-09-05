@@ -5,7 +5,8 @@
  */
 package com.ouyx.lib_wifip2p_connector.facade.callback
 
-import com.ouyx.lib_wifip2p_connector.facade.data.SearchActionFailType
+import com.ouyx.lib_wifip2p_connector.facade.data.PeerDevice
+import com.ouyx.lib_wifip2p_connector.facade.data.SearchFailType
 import kotlinx.coroutines.launch
 
 
@@ -18,30 +19,45 @@ import kotlinx.coroutines.launch
  */
 class SearchDevicesCallback : BaseCallback() {
 
-    private var searchActionSuccess: (() -> Unit)? = null
+    private var searchStart: (() -> Unit)? = null
 
-    private var sendActionFail: ((failType: SearchActionFailType) -> Unit)? = null
+    private var sendFail: ((failType: SearchFailType) -> Unit)? = null
+
+    private var searchSuccess: ((deviceList: List<PeerDevice>) -> Unit)? = null
+
 
     /**
-     * 搜索操作成功
+     * 开始搜索
      */
-    fun onSearchActionSuccess(onSuccess: (() -> Unit)) {
-        this.searchActionSuccess = onSuccess
+    fun onSearchStart(onStart: (() -> Unit)) {
+        this.searchStart = onStart
     }
 
     /**
      * 搜索操作失败
      */
-    fun onSearchActionFail(onFail: ((failType: SearchActionFailType) -> Unit)) {
-        this.sendActionFail = onFail
+    fun onSearchFail(onFail: ((failType: SearchFailType) -> Unit)) {
+        this.sendFail = onFail
     }
 
-    internal fun callSearchActionSuccess() {
-        mainScope.launch { searchActionSuccess?.invoke() }
+    /**
+     * 搜索成功
+     */
+    fun onSearchSuccess(onSuccess: ((deviceList: List<PeerDevice>) -> Unit)) {
+        this.searchSuccess = onSuccess
     }
 
-    internal fun callSearchActionFail(failType: SearchActionFailType) {
-        mainScope.launch { sendActionFail?.invoke(failType) }
+
+    internal fun callSearchStart() {
+        mainScope.launch { searchStart?.invoke() }
+    }
+
+    internal fun callSearchFail(failType: SearchFailType) {
+        mainScope.launch { sendFail?.invoke(failType) }
+    }
+
+    internal fun callSearchSuccess(deviceList: List<PeerDevice>) {
+        mainScope.launch { searchSuccess?.invoke(deviceList) }
     }
 
 }

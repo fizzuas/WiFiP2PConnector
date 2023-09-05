@@ -19,4 +19,9 @@ object Constant {
      */
     const val DEFAULT_IS_DEBUG = true
 
+    /**
+     * 搜索时间
+     */
+    const val SEARCH_TIME_MS = 2000L
+
 }

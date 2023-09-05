@@ -46,4 +46,6 @@ interface IConnector {
      * 释放资源
      */
     fun close()
+
+
 }
