@@ -11,15 +11,21 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.NetworkInfo
-import android.net.wifi.WpsInfo
-import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
+import android.net.wifi.p2p.WifiP2pGroup
+import android.net.wifi.p2p.WifiP2pInfo
 import android.net.wifi.p2p.WifiP2pManager
+import android.os.Build
+import androidx.annotation.RequiresApi
+import com.ouyx.lib_wifip2p_connector.core.request.ConnectCancelReason
+import com.ouyx.lib_wifip2p_connector.core.request.ConnectRequest
 import com.ouyx.lib_wifip2p_connector.core.request.SearchRequest
+import com.ouyx.lib_wifip2p_connector.facade.callback.ConnectCallback
 import com.ouyx.lib_wifip2p_connector.facade.callback.SearchDevicesCallback
+import com.ouyx.lib_wifip2p_connector.facade.data.ConnectedInfo
 import com.ouyx.lib_wifip2p_connector.facade.data.PeerDevice
 import com.ouyx.lib_wifip2p_connector.facade.data.getDeviceState
-import com.ouyx.lib_wifip2p_connector.facade.listener.PeerChangedLsistener
+import com.ouyx.lib_wifip2p_connector.facade.listener.PeerChangedListener
 import com.ouyx.lib_wifip2p_connector.util.DefaultLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +33,8 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 
 /**
@@ -45,13 +53,19 @@ class ConnectorImpl private constructor() : IConnector, BroadcastReceiver() {
 
     fun getIOScope() = ioScope
 
-    private var mPeerChangedListener: PeerChangedLsistener? = null
+    private var mPeerChangedListener: PeerChangedListener? = null
 
+
+    /**
+     * 当前设备列表
+     */
     private val mCurPeerDeviceList = mutableListOf<PeerDevice>()
 
     fun getPeerDevices() = mCurPeerDeviceList.toList()
 
-    fun clearPeerDevices() = mCurPeerDeviceList.clear()
+    private var mSearchRequest: SearchRequest? = null
+
+    private var mConnectRequest: ConnectRequest? = null
 
     /**
      * P2P 是否启用
@@ -79,7 +93,7 @@ class ConnectorImpl private constructor() : IConnector, BroadcastReceiver() {
     }
 
 
-    fun setPeerListListener(peerListListener: PeerChangedLsistener) {
+    fun setPeerListListener(peerListListener: PeerChangedListener) {
         this.mPeerChangedListener = peerListListener
     }
 
@@ -88,27 +102,26 @@ class ConnectorImpl private constructor() : IConnector, BroadcastReceiver() {
     }
 
     override fun searchDevices(callback: SearchDevicesCallback) {
-        SearchRequest.get().searchDevices(callback)
+        if (mSearchRequest == null) {
+            mSearchRequest = SearchRequest()
+        }
+        mSearchRequest?.searchDevices(callback)
     }
 
-
-    @SuppressLint("MissingPermission")
-    override fun connect(address: String) {
-        val wifiP2pConfig = WifiP2pConfig()
-        wifiP2pConfig.deviceAddress = address
-        wifiP2pConfig.wps.setup = WpsInfo.PBC
-        DefaultLogger.warning(message = "正在连接，deviceName: $address")
-        getWiFiManager().connect(getWiFiChannel(), wifiP2pConfig,
-            object : WifiP2pManager.ActionListener {
-                override fun onSuccess() {
-                    DefaultLogger.warning("connect onSuccess")
-                }
-
-                override fun onFailure(reason: Int) {
-                    DefaultLogger.warning("连接失败 $reason")
-                }
-            })
+    override fun connect(address: String, callback: ConnectCallback) {
+        if (mConnectRequest == null) {
+            mConnectRequest = ConnectRequest()
+        }
+        mConnectRequest?.connect(address, callback)
     }
+
+    /**
+     * 用户主动取消
+     */
+    fun stopConnect() {
+        mConnectRequest?.stopConnect()
+    }
+
 
     override fun disConnect() {
         getWiFiManager().cancelConnect(getWiFiChannel(), object : WifiP2pManager.ActionListener {
@@ -126,6 +139,10 @@ class ConnectorImpl private constructor() : IConnector, BroadcastReceiver() {
     override fun close() {
         getApplication().unregisterReceiver(this)
         mPeerChangedListener = null
+
+        mSearchRequest?.close()
+        mSearchRequest = null
+
         mainScope.cancel()
         ioScope.cancel()
         INSTANCE = null
@@ -150,11 +167,6 @@ class ConnectorImpl private constructor() : IConnector, BroadcastReceiver() {
                     DefaultLogger.debug("WIFI_P2P_PEERS_CHANGED_ACTION")
                     mPeerChangedListener?.let {
                         getWiFiManager().requestPeers(getWiFiChannel()) { wifiP2pDeviceList ->
-
-                            mainScope.launch {
-                                mPeerChangedListener?.onPeersAvailable(wifiP2pDeviceList.deviceList)
-                            }
-
                             val peerDeviceList = wifiP2pDeviceList.deviceList.map {
                                 PeerDevice(
                                     deviceName = it.deviceName,
@@ -164,27 +176,45 @@ class ConnectorImpl private constructor() : IConnector, BroadcastReceiver() {
                             }
                             mCurPeerDeviceList.clear()
                             mCurPeerDeviceList.addAll(peerDeviceList)
-                            DefaultLogger.debug("当前PEER列表更新 : $mCurPeerDeviceList")
+                            DefaultLogger.debug("当前PEER列表更新(size=${mCurPeerDeviceList.size}) : $mCurPeerDeviceList")
+
+                            mainScope.launch {
+                                mPeerChangedListener?.onPeersChanged(mCurPeerDeviceList)
+                            }
                         }
                     }
                 }
 
                 //指示 Wi-Fi 点对点连接的状态已更改。从 Android 10 开始，这不是固定的。
                 WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION -> {
-                    val networkInfo =
-                        intent.getParcelableExtra<NetworkInfo>(WifiP2pManager.EXTRA_NETWORK_INFO)
-
-                    DefaultLogger.warning("WIFI_P2P_CONNECTION_CHANGED_ACTION ： " + networkInfo?.isConnected)
-
-                    if (networkInfo != null && networkInfo.isConnected) {
-                        getWiFiManager().requestConnectionInfo(getWiFiChannel()) { info ->
-                            if (info != null) {
-                                DefaultLogger.info("已连接设备= $info")
+                    getMainScope().launch {
+                        val networkInfo =
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                syncRequestNetworkInfo()
+                            } else {
+                                intent.getParcelableExtra<NetworkInfo>(WifiP2pManager.EXTRA_NETWORK_INFO)
                             }
+                        DefaultLogger.warning("WIFI_P2P_CONNECTION_CHANGED_ACTION ：networkInfo=$networkInfo")
+
+                        if (networkInfo != null && networkInfo.isConnected) {
+                            val p2pInfo = awaitRequestConnectionInfo()
+                            DefaultLogger.debug("已连接 P2P设备  $p2pInfo")
+
+                            val groupInfo = awaitRequestGroupInfo()
+                            DefaultLogger.debug("Group信息 $groupInfo")
+
+                            val connectedInfo = ConnectedInfo(
+                                groupOwnerIP = p2pInfo.groupOwnerAddress,
+                                isGroupOwner = p2pInfo.isGroupOwner,
+                                groupOwnerDeviceName = groupInfo.owner.deviceName,
+                                groupOwnerDeviceAddress = groupInfo.owner.deviceAddress,
+                            )
+                            DefaultLogger.debug("connectedInfo信息 $connectedInfo")
+                            mConnectRequest?.onConnected(connectedInfo)
+
+                        } else {
+                            DefaultLogger.warning("与 P2P 设备已断开连接")
                         }
-                        DefaultLogger.warning("已连接 P2P 设备")
-                    } else {
-                        DefaultLogger.warning("与 P2P 设备已断开连接")
                     }
                 }
                 //指示此设备的配置详细信息已更改。从 Android 10 开始，这不是固定的。
@@ -192,9 +222,46 @@ class ConnectorImpl private constructor() : IConnector, BroadcastReceiver() {
                     val wifiP2pDevice =
                         intent.getParcelableExtra<WifiP2pDevice>(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE)
                     if (wifiP2pDevice != null) {
+
                     }
                     DefaultLogger.warning("WIFI_P2P_THIS_DEVICE_CHANGED_ACTION ： ${wifiP2pDevice.toString()}")
                 }
+            }
+        }
+    }
+
+
+    /**
+     * 同步获取networkInfo
+     */
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private suspend fun syncRequestNetworkInfo(): NetworkInfo {
+        return suspendCoroutine { continuation ->
+            getWiFiManager().requestNetworkInfo(getWiFiChannel()) { networkInfo ->
+                continuation.resume(networkInfo)
+            }
+        }
+    }
+
+    /**
+     * 同步获取WifiP2pInfo
+     */
+    private suspend fun awaitRequestConnectionInfo(): WifiP2pInfo {
+        return suspendCoroutine { continuation ->
+            getWiFiManager().requestConnectionInfo(getWiFiChannel()) {
+                continuation.resume(it)
+            }
+        }
+    }
+
+    /**
+     * 同步获取 WifiP2pGroup
+     */
+    @SuppressLint("MissingPermission")
+    private suspend fun awaitRequestGroupInfo(): WifiP2pGroup {
+        return suspendCoroutine { continuation ->
+            getWiFiManager().requestGroupInfo(getWiFiChannel()) {
+                continuation.resume(it)
             }
         }
     }

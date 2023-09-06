@@ -33,15 +33,6 @@ class SearchRequest : BaseRequest {
 
     private var mCallback: SearchDevicesCallback? = null
 
-    companion object {
-        @Volatile
-        private var INSTANCE: SearchRequest? = null
-        fun get(): SearchRequest =
-            INSTANCE ?: synchronized(this) {
-                INSTANCE ?: SearchRequest().also { INSTANCE = it }
-            }
-    }
-
 
     /**
      * 扫描周围设备
@@ -73,9 +64,7 @@ class SearchRequest : BaseRequest {
         DefaultLogger.info("使用 Wi-Fi 点对点连接开始搜索附近的设备...")
         getWiFiManager().discoverPeers(getWiFiChannel(), object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
-                //开始搜索周围设备，将上次扫描到的设备集合清空
                 isSearching.set(true)
-                ConnectorImpl.get().clearPeerDevices()
                 mCallback?.callSearchStart()
 
                 getMainScope().launch {
@@ -106,5 +95,9 @@ class SearchRequest : BaseRequest {
                 }
             }
         })
+    }
+
+    override fun close() {
+        mCallback = null
     }
 }

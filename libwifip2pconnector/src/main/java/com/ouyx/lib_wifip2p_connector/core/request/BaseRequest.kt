@@ -16,6 +16,7 @@ import com.ouyx.lib_wifip2p_connector.core.ConnectorImpl
  */
 interface BaseRequest {
 
+    fun getIoScope() = ConnectorImpl.get().getIOScope()
 
     fun getMainScope() = ConnectorImpl.get().getMainScope()
 
@@ -26,5 +27,8 @@ interface BaseRequest {
     fun getWiFiManager() = ConnectorImpl.get().getWiFiManager()
 
     fun getWiFiChannel() = ConnectorImpl.get().getWiFiChannel()
+
+
+    fun close()
 
 }

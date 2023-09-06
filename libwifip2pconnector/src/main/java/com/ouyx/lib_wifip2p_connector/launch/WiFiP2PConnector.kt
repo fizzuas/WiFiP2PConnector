@@ -10,8 +10,9 @@ import android.content.Context.WIFI_P2P_SERVICE
 import android.net.wifi.p2p.WifiP2pManager
 import com.ouyx.lib_wifip2p_connector.core.ConnectorImpl
 import com.ouyx.lib_wifip2p_connector.exceptions.InitializationException
+import com.ouyx.lib_wifip2p_connector.facade.callback.ConnectCallback
 import com.ouyx.lib_wifip2p_connector.facade.callback.SearchDevicesCallback
-import com.ouyx.lib_wifip2p_connector.facade.listener.PeerChangedLsistener
+import com.ouyx.lib_wifip2p_connector.facade.listener.PeerChangedListener
 import com.ouyx.lib_wifip2p_connector.util.DefaultLogger
 
 
@@ -84,7 +85,7 @@ class WiFiP2PConnector {
     /**
      * 设置P2P连接的对等列表监听器
      */
-    fun setPeerListListener(peerListListener: PeerChangedLsistener) {
+    fun setPeerListListener(peerListListener: PeerChangedListener) {
         ConnectorImpl.get().setPeerListListener(peerListListener)
     }
 
@@ -96,10 +97,12 @@ class WiFiP2PConnector {
     }
 
 
-    fun connect(deviceAddress: String) {
+    fun connect(address: String, callback: ConnectCallback.() -> Unit) {
         checkInitialization()
 
-        ConnectorImpl.get().connect(deviceAddress)
+        val connectCallback = ConnectCallback()
+        connectCallback.callback()
+        ConnectorImpl.get().connect(address,connectCallback)
     }
 
     fun  disConnect(){

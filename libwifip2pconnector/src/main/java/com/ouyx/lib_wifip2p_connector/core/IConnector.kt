@@ -5,6 +5,7 @@
  */
 package com.ouyx.lib_wifip2p_connector.core
 
+import com.ouyx.lib_wifip2p_connector.facade.callback.ConnectCallback
 import com.ouyx.lib_wifip2p_connector.facade.callback.SearchDevicesCallback
 import com.ouyx.lib_wifip2p_connector.launch.WiFiP2PConnector
 
@@ -34,7 +35,7 @@ interface IConnector {
     /**
      * 连接设备
      */
-    fun connect(address: String)
+    fun connect(address: String,callback: ConnectCallback)
 
     /**
      * 断开连接

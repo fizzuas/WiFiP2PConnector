@@ -6,7 +6,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ouyx.lib_wifip2p_connector.facade.data.PeerDevice
-import com.ouyx.lib_wifip2p_connector.facade.listener.PeerChangedLsistener
+import com.ouyx.lib_wifip2p_connector.facade.listener.PeerChangedListener
 import com.ouyx.lib_wifip2p_connector.launch.WiFiP2PConnector
 import com.ouyx.wifip2pconnector.databinding.ActivityMainBinding
 
@@ -56,7 +56,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(ActivityMainBinding::infl
                 }
             }
         }
-        mDeviceAdapter.onItemClickListener =object : OnItemClickListener {
+        mDeviceAdapter.onItemClickListener = object : OnItemClickListener {
             override fun onItemClick(position: Int) {
                 val peerDevice = mPeerList.getOrNull(position)
                 if (peerDevice != null) {
@@ -68,10 +68,23 @@ class MainActivity : BaseActivity<ActivityMainBinding>(ActivityMainBinding::infl
         viewBinding.butDisConnect.setOnClickListener {
             WiFiP2PConnector.get().disConnect()
         }
+
+        WiFiP2PConnector.get().setPeerListListener(object : PeerChangedListener {
+            override fun onPeersChanged(wifiP2pDeviceList: List<PeerDevice>) {
+                mPeerList.clear()
+                mPeerList.addAll(wifiP2pDeviceList)
+                mDeviceAdapter.notifyDataSetChanged()
+            }
+        })
     }
 
     private fun connect(wifiP2pDevice: PeerDevice) {
-        WiFiP2PConnector.get().connect(wifiP2pDevice.deviceAddress)
+        WiFiP2PConnector.get().connect(wifiP2pDevice.deviceAddress) {
+            onConnectFail { DefaultLogger.error("连接失败$it") }
+            onConnectStart { DefaultLogger.warning("开始连接...") }
+            onConnectSuccess { DefaultLogger.warning("连接成功 $it") }
+
+        }
     }
 
     private fun search() {
@@ -87,17 +100,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(ActivityMainBinding::infl
             }
             onSearchSuccess {
                 DefaultLogger.warning("搜索成功 $it")
-
-                mPeerList.addAll(it)
-                mDeviceAdapter.notifyDataSetChanged()
             }
         }
 
-        WiFiP2PConnector.get().setPeerListListener(object : PeerChangedLsistener {
-            override fun onPeersAvailable(wifiP2pDeviceList: Collection<WifiP2pDevice>) {
-
-            }
-        })
     }
 
     override fun onDestroy() {

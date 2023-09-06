@@ -3,19 +3,20 @@
  * 不能修改和删除上面的版权声明
  * 此代码属于上海微创卜算子医疗科技有限公司编写，在未经允许的情况下不得传播复制
  */
-package com.ouyx.lib_wifip2p_connector.facade.listener
-
-import android.net.wifi.p2p.WifiP2pDevice
+package com.ouyx.lib_wifip2p_connector.facade.data
 
 
 /**
- *  搜索列表变化 接口
+ * 连接失败原因
  *
  * @author ouyx
- * @date 2023年08月31日 16时05分
+ * @date 2023年09月06日 15时34分
  */
-interface PeerChangedLsistener {
+sealed class ConnectFailType {
 
-    fun onPeersAvailable(wifiP2pDeviceList: Collection<WifiP2pDevice>)
+    object UnKnown: ConnectFailType()
 
+    object TimeOut : ConnectFailType()
+
+    object CancelByChoice : ConnectFailType()
 }
